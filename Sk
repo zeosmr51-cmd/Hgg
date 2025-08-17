@@ -1,0 +1,36 @@
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+local function attach(char)
+    if not char then return end
+    for _, h in ipairs(char:GetChildren()) do
+        if h:IsA("Highlight") then h:Destroy() end
+    end
+    local hl = Instance.new("Highlight")
+    hl.Adornee = char
+    hl.FillColor = Color3.new(1, 0, 0)
+    hl.OutlineColor = Color3.new(1, 1, 1)
+    hl.FillTransparency = 0.6
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Parent = char
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= LP then
+        if p.Character then attach(p.Character) end
+        p.CharacterAdded:Connect(function(c)
+            task.wait(0.2)
+            attach(c)
+        end)
+    end
+end
+
+Players.PlayerAdded:Connect(function(p)
+    if p ~= LP then
+        p.CharacterAdded:Connect(function(c)
+            task.wait(0.2)
+            attach(c)
+        end)
+        if p.Character then attach(p.Character) end
+    end
+end)
