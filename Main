@@ -1,0 +1,92 @@
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = LP:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 220)
+frame.Position = UDim2.new(0, 10, 0, 50)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Parent = screenGui
+
+local function createButton(text, position, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 180, 0, 40)
+    button.Position = position
+    button.Text = text
+    button.Parent = frame
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- ESP
+createButton("ESP", UDim2.new(0, 10, 0, 10), function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            if not p.Character:FindFirstChildOfClass("Highlight") then
+                local highlight = Instance.new("Highlight")
+                highlight.Adornee = p.Character
+                highlight.Parent = p.Character
+            end
+        end
+    end
+end)
+
+-- Aimbot
+local AimbotEnabled = false
+local aimbotButton = createButton("Aimbot", UDim2.new(0, 10, 0, 60), function()
+    AimbotEnabled = not AimbotEnabled
+end)
+
+local function getClosestPlayer()
+    local closestDist = math.huge
+    local closestPlayer = nil
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("Head") then
+            local headPos, onScreen = Camera:WorldToViewportPoint(p.Character.Head.Position)
+            if onScreen then
+                local mousePos = UserInputService:GetMouseLocation()
+                local dist = (Vector2.new(headPos.X, headPos.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closestPlayer = p
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+RunService.RenderStepped:Connect(function()
+    if AimbotEnabled then
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+        end
+    end
+end)
+
+-- WalkSpeed
+createButton("WalkSpeed", UDim2.new(0, 10, 0, 110), function() end)
+
+local slider = Instance.new("TextBox")
+slider.Size = UDim2.new(0, 180, 0, 30)
+slider.Position = UDim2.new(0, 10, 0, 160)
+slider.PlaceholderText = "WalkSpeed"
+slider.Text = ""
+slider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+slider.TextColor3 = Color3.fromRGB(255, 255, 255)
+slider.Parent = frame
+
+slider.FocusLost:Connect(function()
+    local speed = tonumber(slider.Text)
+    if speed and LP.Character and LP.Character:FindFirstChild("Humanoid") then
+        LP.Character.Humanoid.WalkSpeed = speed
+    end
+end)
