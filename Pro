@@ -1,0 +1,121 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 40, 0, 40)
+ToggleButton.Position = UDim2.new(0.05, 0, 0.3, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ToggleButton.Text = "≡"
+ToggleButton.TextColor3 = Color3.new(1,1,1)
+ToggleButton.Parent = ScreenGui
+ToggleButton.ZIndex = 2
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 200, 0, 200)
+MainFrame.Position = UDim2.new(0.1, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local ESPBtn = Instance.new("TextButton", MainFrame)
+ESPBtn.Size = UDim2.new(1, -10, 0, 40)
+ESPBtn.Position = UDim2.new(0, 5, 0, 10)
+ESPBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+ESPBtn.TextColor3 = Color3.new(1,1,1)
+ESPBtn.Text = "ESP OFF"
+
+local AimBtn = Instance.new("TextButton", MainFrame)
+AimBtn.Size = UDim2.new(1, -10, 0, 40)
+AimBtn.Position = UDim2.new(0, 5, 0, 60)
+AimBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+AimBtn.TextColor3 = Color3.new(1,1,1)
+AimBtn.Text = "Aimbot OFF"
+
+local SpeedLabel = Instance.new("TextLabel", MainFrame)
+SpeedLabel.Size = UDim2.new(1, -10, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 5, 0, 110)
+SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "WalkSpeed"
+
+local SpeedBox = Instance.new("TextBox", MainFrame)
+SpeedBox.Size = UDim2.new(1, -10, 0, 30)
+SpeedBox.Position = UDim2.new(0, 5, 0, 140)
+SpeedBox.BackgroundColor3 = Color3.fromRGB(70,70,70)
+SpeedBox.TextColor3 = Color3.new(1,1,1)
+SpeedBox.Text = tostring(LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.WalkSpeed or 16)
+
+local ESPEnabled = false
+local AimEnabled = false
+
+local function ToggleESP()
+    ESPEnabled = not ESPEnabled
+    ESPBtn.Text = ESPEnabled and "ESP ON" or "ESP OFF"
+end
+
+local function ToggleAimbot()
+    AimEnabled = not AimEnabled
+    AimBtn.Text = AimEnabled and "Aimbot ON" or "Aimbot OFF"
+end
+
+SpeedBox.FocusLost:Connect(function()
+    local speed = tonumber(SpeedBox.Text)
+    if speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = speed
+    end
+end)
+
+ESPBtn.MouseButton1Click:Connect(ToggleESP)
+AimBtn.MouseButton1Click:Connect(ToggleAimbot)
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+RunService.RenderStepped:Connect(function()
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+            local head = plr.Character.Head
+            local esp = head:FindFirstChild("ESP")
+            if ESPEnabled then
+                if not esp then
+                    local billboard = Instance.new("BillboardGui", head)
+                    billboard.Name = "ESP"
+                    billboard.Size = UDim2.new(0,100,0,50)
+                    billboard.AlwaysOnTop = true
+                    local label = Instance.new("TextLabel", billboard)
+                    label.Size = UDim2.new(1,0,1,0)
+                    label.BackgroundTransparency = 1
+                    label.Text = plr.Name
+                    label.TextColor3 = Color3.new(1,0,0)
+                end
+            else
+                if esp then esp:Destroy() end
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if AimEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
+        local closest, dist = nil, math.huge
+        local myHeadPos = LocalPlayer.Character.Head.Position
+        for _,plr in pairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                local mag = (plr.Character.Head.Position - myHeadPos).Magnitude
+                if mag < dist then
+                    dist = mag
+                    closest = plr
+                end
+            end
+        end
+        if closest then
+            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, closest.Character.Head.Position)
+        end
+    end
+end)
