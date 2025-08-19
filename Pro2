@@ -1,0 +1,130 @@
+local Players=game:GetService("Players")
+local LocalPlayer=Players.LocalPlayer
+local RunService=game:GetService("RunService")
+local StarterGui=LocalPlayer:WaitForChild("PlayerGui")
+local Camera=workspace.CurrentCamera
+local ScreenGui=Instance.new("ScreenGui",StarterGui)
+local ToggleButton=Instance.new("TextButton",ScreenGui)
+ToggleButton.Size=UDim2.new(0,40,0,40)
+ToggleButton.Position=UDim2.new(0.05,0,0.3,0)
+ToggleButton.BackgroundColor3=Color3.fromRGB(50,50,50)
+ToggleButton.Text="≡"
+ToggleButton.TextColor3=Color3.new(1,1,1)
+local MainFrame=Instance.new("Frame",ScreenGui)
+MainFrame.Size=UDim2.new(0,200,0,250)
+MainFrame.Position=UDim2.new(0.1,0,0.3,0)
+MainFrame.BackgroundColor3=Color3.fromRGB(30,30,30)
+MainFrame.Visible=false
+MainFrame.Active=true
+MainFrame.Draggable=true
+local ESPBtn=Instance.new("TextButton",MainFrame)
+ESPBtn.Size=UDim2.new(1,-10,0,40)
+ESPBtn.Position=UDim2.new(0,5,0,10)
+ESPBtn.BackgroundColor3=Color3.fromRGB(70,70,70)
+ESPBtn.TextColor3=Color3.new(1,1,1)
+ESPBtn.Text="ESP OFF"
+local AimBtn=Instance.new("TextButton",MainFrame)
+AimBtn.Size=UDim2.new(1,-10,0,40)
+AimBtn.Position=UDim2.new(0,5,0,60)
+AimBtn.BackgroundColor3=Color3.fromRGB(70,70,70)
+AimBtn.TextColor3=Color3.new(1,1,1)
+AimBtn.Text="Aimbot OFF"
+local SpeedLabel=Instance.new("TextLabel",MainFrame)
+SpeedLabel.Size=UDim2.new(1,-10,0,20)
+SpeedLabel.Position=UDim2.new(0,5,0,110)
+SpeedLabel.BackgroundTransparency=1
+SpeedLabel.TextColor3=Color3.new(1,1,1)
+SpeedLabel.Text="WalkSpeed"
+local SpeedBox=Instance.new("TextBox",MainFrame)
+SpeedBox.Size=UDim2.new(1,-60,0,30)
+SpeedBox.Position=UDim2.new(0,5,0,140)
+SpeedBox.BackgroundColor3=Color3.fromRGB(70,70,70)
+SpeedBox.TextColor3=Color3.new(1,1,1)
+SpeedBox.Text=tostring(LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.WalkSpeed or 16)
+local SpeedToggle=Instance.new("TextButton",MainFrame)
+SpeedToggle.Size=UDim2.new(0,50,0,30)
+SpeedToggle.Position=UDim2.new(1,-55,0,140)
+SpeedToggle.BackgroundColor3=Color3.fromRGB(70,70,70)
+SpeedToggle.TextColor3=Color3.new(1,1,1)
+SpeedToggle.Text="OFF"
+local ESPEnabled=false
+local AimEnabled=false
+local SpeedEnabled=false
+local CurrentSpeed=tonumber(SpeedBox.Text) or 16
+local LastCameraCF=Camera.CFrame
+ESPBtn.MouseButton1Click:Connect(function()
+ESPEnabled=not ESPEnabled
+ESPBtn.Text=ESPEnabled and"ESP ON" or"ESP OFF"
+end)
+AimBtn.MouseButton1Click:Connect(function()
+AimEnabled=not AimEnabled
+AimBtn.Text=AimEnabled and"Aimbot ON" or"Aimbot OFF"
+end)
+SpeedToggle.MouseButton1Click:Connect(function()
+SpeedEnabled=not SpeedEnabled
+SpeedToggle.Text=SpeedEnabled and"ON" or"OFF"
+if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")then
+LocalPlayer.Character.Humanoid.WalkSpeed=CurrentSpeed
+end
+end)
+SpeedBox.FocusLost:Connect(function()
+local speed=tonumber(SpeedBox.Text)
+if speed then
+CurrentSpeed=speed
+if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")then
+LocalPlayer.Character.Humanoid.WalkSpeed=CurrentSpeed
+end
+end
+end)
+ToggleButton.MouseButton1Click:Connect(function()
+MainFrame.Visible=not MainFrame.Visible
+end)
+LocalPlayer.CharacterAdded:Connect(function(char)
+char:WaitForChild("Humanoid")
+if SpeedEnabled then
+char.Humanoid.WalkSpeed=CurrentSpeed
+end
+end)
+RunService.RenderStepped:Connect(function()
+for _,plr in pairs(Players:GetPlayers())do
+if plr~=LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")then
+local hrp=plr.Character.HumanoidRootPart
+local hl=hrp:FindFirstChild("ESP_Highlight")
+if ESPEnabled then
+if not hl then
+hl=Instance.new("Highlight",hrp)
+hl.Name="ESP_Highlight"
+hl.FillColor=Color3.new(1,0,0)
+hl.OutlineTransparency=1
+end
+else
+if hl then hl:Destroy() end
+end
+end
+end
+end)
+local function GetClosestEnemy()
+local closest,dist=nil,math.huge
+local camPos=Camera.CFrame.Position
+for _,plr in pairs(Players:GetPlayers())do
+if plr~=LocalPlayer and plr.Team~=LocalPlayer.Team and plr.Character and plr.Character:FindFirstChild("Head")then
+local mag=(plr.Character.Head.Position-camPos).Magnitude
+if mag<dist then
+dist=mag
+closest=plr
+end
+end
+end
+return closest
+end
+RunService.RenderStepped:Connect(function()
+if AimEnabled then
+if Camera.CFrame~=LastCameraCF then
+local target=GetClosestEnemy()
+if target and target.Character and target.Character:FindFirstChild("Head")then
+Camera.CFrame=CFrame.new(Camera.CFrame.Position,target.Character.Head.Position)
+end
+end
+LastCameraCF=Camera.CFrame
+end
+end)
